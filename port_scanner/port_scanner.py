@@ -34,17 +34,29 @@ def port_scanner(port, host, s):
     except (socket.timeout, ConnectionRefusedError):
         s.close()
 
+def scan_ports(ports, target):
+
+    for port in ports:
+        s = create_socket()
+        port_scanner(port, target, s)
+
+
+def parse_ports(ports_str):
+
+    if '-' in ports_str:
+        start, end = map(int, ports_str.split('-')) # En start se almacena el primer elemento antes del guion y en end el resto
+        return range(start, end+1)
+
+    elif ',' in ports_str:
+        return map(int, ports_str.split(','))
+    else:
+        return (int(ports_str),)  # Solo hay un elemento
+
 def main():
 
-    target, port = get_arguments()
-
-    if '-' in port:
-        ports = port.split('-')
-               
-        for port in range(int(ports[0]), int(ports[1])):
-            s = create_socket()
-            port_scanner(port, target, s)
-
+    target, ports_str = get_arguments()
+    ports = parse_ports(ports_str)
+    scan_ports(ports, target)
 
 if __name__ == "__main__":
     main()
