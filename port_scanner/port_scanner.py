@@ -2,15 +2,15 @@
 
 import socket
 import argparse
-import sys
+import threading
 from termcolor import colored
 
 
 def get_arguments():
 
     parser = argparse.ArgumentParser(description='Fast TCP Port Scanner')
-    parser.add_argument("-t", "--target", dest="target", help="Victim target to scan (Ex: -t 192.168.1.1)")
-    parser.add_argument("-p", "--port", dest="port", help="Port range to scan (Ex: -p 1-100)")
+    parser.add_argument("-t", "--target", dest="target", required=True, help="Victim target to scan (Ex: -t 192.168.1.1)")
+    parser.add_argument("-p", "--port", dest="port", required=True, help="Port range to scan (Ex: -p 1-100)")
     options = parser.parse_args()
 
     if not options.target or options.port is None:
@@ -24,7 +24,9 @@ def create_socket():
     s.settimeout(0.5) # Timpo para ver si está abierto o cerrao
     return s
 
-def port_scanner(port, host, s):
+def port_scanner(port, host):
+
+    s = create_socket()
 
     try:
         s.connect((host, port)) 
@@ -36,10 +38,15 @@ def port_scanner(port, host, s):
 
 def scan_ports(ports, target):
 
-    for port in ports:
-        s = create_socket()
-        port_scanner(port, target, s)
+    threads= []
 
+    for port in ports:
+        thread = threading.Thread(target=port_scanner, args=(port, target))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
 
 def parse_ports(ports_str):
 
