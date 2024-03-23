@@ -2,7 +2,7 @@
 
 import socket
 import argparse
-import threading
+from concurrent.futures import ThreadPoolExecutor
 from termcolor import colored
 
 
@@ -38,15 +38,8 @@ def port_scanner(port, host):
 
 def scan_ports(ports, target):
 
-    threads= []
-
-    for port in ports:
-        thread = threading.Thread(target=port_scanner, args=(port, target))
-        threads.append(thread)
-        thread.start()
-
-    for thread in threads:
-        thread.join()
+    with ThreadPoolExecutor(max_workers=100) as executor:  #Para tener un máximo de hilos, en este caso 50
+        executor.map(lambda port: port_scanner(port, target), ports)  # Se usa lambda para evitar el conflicto al pasar 2 parámetros a la función frente a un iterable (ports)
 
 def parse_ports(ports_str):
 
