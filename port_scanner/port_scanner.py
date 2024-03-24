@@ -2,9 +2,22 @@
 
 import socket
 import argparse
+import signal
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from termcolor import colored
 
+open_sockets = []
+
+def def_handler(sig, frame):
+    print(colored(f"\n[!] Saliendo del programa...\n", 'red'))
+    
+    for socket in open_sockets:
+        socket.close()
+
+    sys.exit(1)
+
+signal.signal(signal.SIGINT, def_handler) #CTRL_C
 
 def get_arguments():
 
@@ -22,6 +35,9 @@ def get_arguments():
 def create_socket():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(0.5) # Timpo para ver si está abierto o cerrao
+
+    open_sockets.append(s)
+
     return s
 
 def port_scanner(port, host):
@@ -29,11 +45,20 @@ def port_scanner(port, host):
     s = create_socket()
 
     try:
-        s.connect((host, port)) 
-        print(colored(f"\n[+] El puerto {port} está abierto", 'green'))
-        s.close()
+        s.connect((host, port))
+        s.sendall(b"HEAD / HTTP/1.0\r\n\r\n")  #\r\n es para simular el enter
+        response = s.recv(1024)
+        response = response.decode(errors='ignore').split('\n')[0]
+
+        if response:
+            print(colored(f"\n[+] El puerto {port} está abierto - {response}", 'green'))
+        else:
+            print(colored(f"\n[+] El puerto {port} está abierto", 'green'))
 
     except (socket.timeout, ConnectionRefusedError):
+        pass
+
+    finally:
         s.close()
 
 def scan_ports(ports, target):
