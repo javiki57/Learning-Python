@@ -14,8 +14,17 @@ def get_arguments():
 
 
 def scan(ip):
-    scapy.arping(ip)
+    arp_packet = scapy.ARP(pdst=ip)
+    broadcast_packet = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
 
+    arp_packet = broadcast_packet/arp_packet  # En el concepto de redes, la '/' es un concepto de composición que nos permite unir capas
+    
+    answered, unanswered = scapy.srp(arp_packet, timeout=1, verbose=False)
+    
+    response = answered.summary()
+
+    if response:
+        print(response)
 
 def main():
     target = get_arguments()
