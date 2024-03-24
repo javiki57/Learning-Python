@@ -2,7 +2,16 @@
 
 import argparse
 import time
+import signal
+import sys
+from termcolor import colored
 import scapy.all as scapy
+
+def def_handler(sig, frame):
+    print(colored(,f"\n[!] Saliendo...\n" 'red'))
+    sys.exit(1)
+
+signal.signal(signal.SIGINT, def_handler)
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="ARP Spoofer")
